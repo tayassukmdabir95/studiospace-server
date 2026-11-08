@@ -2,24 +2,18 @@
 import { getDB } from "../config/db.js";
 import { ObjectId } from "mongodb";
 
-
 export async function createBooking(req, res) {
   try {
     const db = getDB();
 
     const {
       studioId,
-      userEmail,
-      userName,
       bookingDate,
       startTime,
       endTime
     } = req.body;
 
-    if (
-      !studioId || !userEmail || !userName ||
-      !bookingDate || !startTime || !endTime
-    ) {
+    if (!studioId || !bookingDate || !startTime || !endTime) {
       return res.status(400).send({
         message: "Please provide all booking details"
       });
@@ -32,14 +26,16 @@ export async function createBooking(req, res) {
     }
 
     const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
     if (
+      !datePattern.test(bookingDate) ||
       !timePattern.test(startTime) ||
       !timePattern.test(endTime) ||
       endTime <= startTime
     ) {
       return res.status(400).send({
-        message: "Please provide a valid time range"
+        message: "Please provide a valid date and time range"
       });
     }
 
@@ -67,7 +63,6 @@ export async function createBooking(req, res) {
       });
     }
 
-
     const start = startTime.split(":");
     const end = endTime.split(":");
 
@@ -80,8 +75,8 @@ export async function createBooking(req, res) {
     const newBooking = {
       studioId,
       studioTitle: studio.title,
-      userEmail,
-      userName,
+      userEmail: req.user.email,
+      userName: req.user.name,
       bookingDate,
       startTime,
       endTime,
@@ -90,14 +85,12 @@ export async function createBooking(req, res) {
       createdAt: new Date()
     };
 
-    const result = await db.collection("bookings")
-      .insertOne(newBooking);
+    const result = await db.collection("bookings").insertOne(newBooking);
 
     res.status(201).send({
       message: "Booking created successfully",
       insertedId: result.insertedId
     });
-
   } catch (error) {
     res.status(500).send({
       message: "Failed to create booking"
@@ -105,32 +98,22 @@ export async function createBooking(req, res) {
   }
 }
 
-
 export async function getMyBookings(req, res) {
   try {
     const db = getDB();
-    const email = req.query.email;
-
-    if (!email) {
-      return res.status(400).send({
-        message: "User email is required"
-      });
-    }
 
     const bookings = await db.collection("bookings")
-      .find({ userEmail: email })
+      .find({ userEmail: req.user.email })
       .sort({ createdAt: -1 })
       .toArray();
 
     res.send(bookings);
-
   } catch (error) {
     res.status(500).send({
       message: "Failed to fetch bookings"
     });
   }
 }
-
 
 export async function cancelBooking(req, res) {
   try {
@@ -146,6 +129,7 @@ export async function cancelBooking(req, res) {
     const result = await db.collection("bookings").updateOne(
       {
         _id: new ObjectId(id),
+        userEmail: req.user.email,
         status: "Pending"
       },
       {
@@ -158,14 +142,13 @@ export async function cancelBooking(req, res) {
 
     if (result.matchedCount === 0) {
       return res.status(404).send({
-        message: "Pending booking not found"
+        message: "Pending booking not found or you are not its owner"
       });
     }
 
     res.send({
       message: "Booking cancelled successfully"
     });
-
   } catch (error) {
     res.status(500).send({
       message: "Failed to cancel booking"
