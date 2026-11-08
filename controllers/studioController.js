@@ -2,7 +2,6 @@
 import { getDB } from "../config/db.js";
 import { ObjectId } from "mongodb";
 
-
 export async function getAllStudios(req, res) {
   try {
     const db = getDB();
@@ -17,7 +16,6 @@ export async function getAllStudios(req, res) {
     res.status(500).send({ message: "Failed to fetch studios" });
   }
 }
-
 
 export async function getSingleStudio(req, res) {
   try {
@@ -55,12 +53,10 @@ export async function addStudio(req, res) {
       location,
       image,
       amenities,
-      description,
-      ownerName,
-      ownerEmail
+      description
     } = req.body;
 
-    if (!title || !category || !location || !ownerEmail) {
+    if (!title || !category || !location) {
       return res.status(400).send({
         message: "Please provide all required fields"
       });
@@ -76,8 +72,8 @@ export async function addStudio(req, res) {
       image,
       amenities: amenities || [],
       description,
-      ownerName,
-      ownerEmail,
+      ownerName: req.user.name,
+      ownerEmail: req.user.email,
       rating: 0,
       createdAt: new Date()
     };
@@ -92,7 +88,6 @@ export async function addStudio(req, res) {
     res.status(500).send({ message: "Failed to add studio" });
   }
 }
-
 
 export async function updateStudio(req, res) {
   try {
@@ -116,7 +111,10 @@ export async function updateStudio(req, res) {
     } = req.body;
 
     const result = await db.collection("studios").updateOne(
-      { _id: new ObjectId(id) },
+      {
+        _id: new ObjectId(id),
+        ownerEmail: req.user.email
+      },
       {
         $set: {
           title,
@@ -134,7 +132,9 @@ export async function updateStudio(req, res) {
     );
 
     if (result.matchedCount === 0) {
-      return res.status(404).send({ message: "Studio not found" });
+      return res.status(404).send({
+        message: "Studio not found or you are not its owner"
+      });
     }
 
     res.send({ message: "Studio updated successfully" });
@@ -142,7 +142,6 @@ export async function updateStudio(req, res) {
     res.status(500).send({ message: "Failed to update studio" });
   }
 }
-
 
 export async function deleteStudio(req, res) {
   try {
@@ -154,11 +153,14 @@ export async function deleteStudio(req, res) {
     }
 
     const result = await db.collection("studios").deleteOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
+      ownerEmail: req.user.email
     });
 
     if (result.deletedCount === 0) {
-      return res.status(404).send({ message: "Studio not found" });
+      return res.status(404).send({
+        message: "Studio not found or you are not its owner"
+      });
     }
 
     res.send({ message: "Studio deleted successfully" });

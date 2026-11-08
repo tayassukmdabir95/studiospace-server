@@ -1,6 +1,7 @@
 
 import { getDB } from "../config/db.js";
 import bcrypt from "bcryptjs";
+
 import jwt from "jsonwebtoken";
 
 function createToken(user) {
