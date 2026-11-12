@@ -53,6 +53,7 @@ export async function registerUser(req, res) {
       email,
       photoURL: photoURL || "",
       password: hashedPassword,
+      
       createdAt: new Date()
     };
 
