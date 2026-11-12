@@ -1,7 +1,6 @@
 
 import { getDB } from "../config/db.js";
 import bcrypt from "bcryptjs";
-
 import jwt from "jsonwebtoken";
 
 function createToken(user) {
@@ -31,41 +30,53 @@ export async function registerUser(req, res) {
     const { name, email, photoURL, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).send({ message: "Please provide all required fields" });
+      return res.status(400).send({
+        message: "Please provide all required fields"
+      });
     }
 
-    if (password.length < 6 || !/[A-Z]/.test(password) || !/[a-z]/.test(password)) {
+    if (
+      password.length < 6 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password)
+    ) {
       return res.status(400).send({
         message: "Password must contain uppercase, lowercase, and at least 6 characters"
       });
     }
 
-    const existingUser = await db.collection("users").findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await db.collection("users").findOne({
+      email: normalizedEmail
+    });
 
     if (existingUser) {
-      return res.status(409).send({ message: "Email already registered" });
+      return res.status(409).send({
+        message: "Email already registered"
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = {
       name,
-      email,
+      email: normalizedEmail,
       photoURL: photoURL || "",
       password: hashedPassword,
-      
       createdAt: new Date()
     };
 
     const result = await db.collection("users").insertOne(newUser);
-    
 
     res.status(201).send({
       message: "Registration successful",
       userId: result.insertedId
     });
   } catch (error) {
-    res.status(500).send({ message: "Registration failed" });
+    res.status(500).send({
+      message: "Registration failed"
+    });
   }
 }
 
@@ -75,19 +86,32 @@ export async function loginUser(req, res) {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).send({ message: "Email and password are required" });
+      return res.status(400).send({
+        message: "Email and password are required"
+      });
     }
 
-    const user = await db.collection("users").findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (!user) {
-      return res.status(401).send({ message: "Invalid email or password" });
+    const user = await db.collection("users").findOne({
+      email: normalizedEmail
+    });
+
+    if (!user || !user.password) {
+      return res.status(401).send({
+        message: "Invalid email or password"
+      });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!isPasswordCorrect) {
-      return res.status(401).send({ message: "Invalid email or password" });
+      return res.status(401).send({
+        message: "Invalid email or password"
+      });
     }
 
     const token = createToken(user);
@@ -104,7 +128,9 @@ export async function loginUser(req, res) {
       }
     });
   } catch (error) {
-    res.status(500).send({ message: "Login failed" });
+    res.status(500).send({
+      message: "Login failed"
+    });
   }
 }
 
@@ -115,7 +141,9 @@ export async function logoutUser(req, res) {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
   });
 
-  res.send({ message: "Logout successful" });
+  res.send({
+    message: "Logout successful"
+  });
 }
 
 export async function getCurrentUser(req, res) {
@@ -128,11 +156,15 @@ export async function getCurrentUser(req, res) {
     );
 
     if (!user) {
-      return res.status(404).send({ message: "User not found" });
+      return res.status(404).send({
+        message: "User not found"
+      });
     }
 
     res.send(user);
   } catch (error) {
-    res.status(500).send({ message: "Failed to fetch user" });
+    res.status(500).send({
+      message: "Failed to fetch user"
+    });
   }
 }
