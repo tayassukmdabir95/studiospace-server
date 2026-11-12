@@ -15,6 +15,7 @@ const router = express.Router();
 router.get("/", getAllStudios);
 router.get("/:id", getSingleStudio);
 router.post("/", verifyToken, addStudio);
+
 router.put("/:id", verifyToken, updateStudio);
 router.delete("/:id", verifyToken, deleteStudio);
 
