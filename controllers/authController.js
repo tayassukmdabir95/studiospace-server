@@ -58,6 +58,7 @@ export async function registerUser(req, res) {
     };
 
     const result = await db.collection("users").insertOne(newUser);
+    
 
     res.status(201).send({
       message: "Registration successful",
