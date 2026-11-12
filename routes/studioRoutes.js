@@ -2,6 +2,7 @@
 import express from "express";
 import { verifyToken } from "../middleware/verifyToken.js";
 
+
 import {
   getAllStudios,
   getSingleStudio,
@@ -9,14 +10,18 @@ import {
   updateStudio,
   deleteStudio
 } from "../controllers/studioController.js";
+import { getFeaturedStudios } from "../controllers/studioController.js";
 
 const router = express.Router();
 
 router.get("/", getAllStudios);
+router.get("/featured", getFeaturedStudios);
 router.get("/:id", getSingleStudio);
+
 router.post("/", verifyToken, addStudio);
 
 router.put("/:id", verifyToken, updateStudio);
 router.delete("/:id", verifyToken, deleteStudio);
+
 
 export default router;

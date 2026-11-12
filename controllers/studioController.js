@@ -168,3 +168,27 @@ export async function deleteStudio(req, res) {
     res.status(500).send({ message: "Failed to delete studio" });
   }
 }
+
+
+
+
+export async function getFeaturedStudios(req, res) {
+  try {
+    const db = getDB();
+
+    const studios = await db
+      .collection("studios")
+      .find({})
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(6)
+      .toArray();
+
+    res.status(200).json(studios);
+  } catch (error) {
+    console.error("Failed to fetch featured studios:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch featured studios"
+    });
+  }
+}
