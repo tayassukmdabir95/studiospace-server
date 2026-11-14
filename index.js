@@ -10,6 +10,7 @@ import { connectDB } from "./config/db.js";
 import studioRoutes from "./routes/studioRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/studios", studioRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.get("/", (req, res) => {
   res.send("StudioSpace Server is Running!");
